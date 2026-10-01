@@ -1,0 +1,14 @@
+Deviation Report
+
+Site: Plant 1
+Date of Occurrence: 27 September 2026
+
+During routine monitoring at Plant 1, the storage temperature for Product A, Batch B2409-15, increased above the approved range for approximately 40 minutes.
+
+The temperature excursion was detected by the monitoring system and the storage condition was restored to the approved range.
+
+No visible product damage was observed.
+
+Affected Process Parameter: Storage Temperature
+Related Product: Product A
+Batch Number: B2409-15
