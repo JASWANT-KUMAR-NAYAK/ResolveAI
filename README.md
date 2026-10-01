@@ -1,44 +1,451 @@
-# AIVOA — AI-Powered Deviation Intake
+# ResolveAI
 
-An AI-assisted deviation intake module for pharmaceutical manufacturing.
+AI-Powered Issue Intake, Triage & Resolution Platform.
 
-The system helps users capture deviation information from a document or text input, automatically extract structured deviation data, assess potential impact and severity, allow human review and editing, and persist the final deviation in PostgreSQL with an audit record.
+ResolveAI is a portfolio-focused evolution of an earlier AI-assisted deviation intake prototype into a broader issue lifecycle management system.
 
----
-
-## Project Overview
-
-The AIVOA Deviation Intake module is designed to reduce manual effort during deviation reporting.
-
-A user can upload a deviation document or describe a deviation through the AI Copilot. The system then:
-
-1. Extracts structured deviation information.
-2. Populates the deviation intake form.
-3. Assesses impact and severity using AI.
-4. Allows the user to review and edit the extracted information.
-5. Saves the reviewed deviation to PostgreSQL.
-6. Creates an audit log entry for the saved deviation.
-
-The workflow keeps a human reviewer in control of the final submitted information.
+The platform is designed to help users capture operational issues from text or documents, extract structured information with AI, review and edit the results, track processing, maintain activity history, and progressively support investigation, actions, and resolution.
 
 ---
 
-## Key Features
+## Project Status
 
-- AI-powered deviation information extraction
-- PDF and TXT document upload
-- Text-based deviation input
-- Automatic form population
-- Automatic deviation title generation
-- AI impact assessment
-- AI severity assessment
-- Human review and editing
-- PostgreSQL persistence
-- Audit logging
-- REST API using FastAPI
-- LangGraph-based AI workflow
-- Groq-powered LLM processing
-- React + Redux frontend
+ResolveAI V2 is currently under active development.
+
+### Implemented
+
+- [x] V2 project structure
+- [x] FastAPI backend
+- [x] React + TypeScript frontend
+- [x] PostgreSQL database
+- [x] SQLAlchemy models
+- [x] Issue CRUD API
+- [x] PDF/TXT file upload
+- [x] Local file storage abstraction
+- [x] Processing job records
+- [x] Document text extraction
+- [x] LangGraph issue extraction workflow
+- [x] Groq LLM integration
+- [x] Pydantic validation
+- [x] Extraction persistence
+- [x] Activity History
+- [x] Conversational change proposals
+- [x] Human confirmation boundary for proposed AI changes
+
+### In Development / Planned
+
+- [ ] Conversational change confirmation and mutation
+- [ ] Backend-enforced issue status transitions
+- [ ] Issue triage workflow
+- [ ] Investigation workflow
+- [ ] Root-cause analysis
+- [ ] Corrective and preventive actions
+- [ ] Similar issue search
+- [ ] Dashboard and analytics
+- [ ] Frontend V2 workflow
+- [ ] Pagination and performance improvements
+- [ ] Automated test coverage
+- [ ] Docker/deployment setup
+- [ ] Embedding-based semantic similarity
+- [ ] Object-storage integration
+
+---
+
+## Product Vision
+
+The target ResolveAI lifecycle is:
+
+```text
+Input
+  ↓
+File / Text Intake
+  ↓
+Storage
+  ↓
+Processing Job
+  ↓
+Document Processing
+  ↓
+AI Issue Extraction
+  ↓
+Validation
+  ↓
+Evidence / Confidence
+  ↓
+Triage
+  ↓
+Human Review
+  ↓
+Conversational Editing
+  ↓
+Investigation
+  ↓
+Root Cause
+  ↓
+Actions
+  ↓
+Resolution
+  ↓
+Activity History
+  ↓
+Analytics
+```
+
+The goal is to move from a simple AI extraction workflow toward a complete issue lifecycle platform while keeping humans in control of important decisions and changes.
+
+---
+
+## Core Concepts
+
+### Issue
+
+An Issue represents an operational incident, deviation, problem, or other event that requires review or resolution.
+
+Current issue fields include:
+
+- Title
+- Description
+- Location
+- Occurred At
+- Affected Product
+- Affected Material
+- Reference ID
+- Affected Area
+- Category
+- Priority
+- Business Impact
+- Status
+
+Current status values begin with:
+
+```text
+NEW
+TRIAGED
+INVESTIGATING
+ACTION_REQUIRED
+RESOLVED
+CLOSED
+```
+
+Status transition enforcement is part of the V2 roadmap.
+
+---
+
+## AI-Assisted Document Processing
+
+ResolveAI can accept supported documents and process them through the backend.
+
+Current supported formats:
+
+- PDF
+- TXT
+
+The processing pipeline is:
+
+```text
+Uploaded File
+     ↓
+StorageService
+     ↓
+ProcessingJob
+     ↓
+DocumentProcessor
+     ↓
+Text Extraction
+     ↓
+LangGraph
+     ↓
+Groq LLM
+     ↓
+Pydantic Validation
+     ↓
+Issue Extraction Records
+```
+
+The current extraction workflow identifies:
+
+- Location
+- Occurrence date
+- Title
+- Description
+- Affected product
+- Affected material
+- Reference ID
+- Affected area
+
+The AI is instructed to extract only information supported by the source document and avoid inventing missing information.
+
+---
+
+## Human-in-the-Loop
+
+AI output is not treated as an automatic final decision.
+
+The intended workflow keeps a human reviewer between AI suggestions and important database mutations.
+
+For example:
+
+```text
+User Request
+     ↓
+AI Interpretation
+     ↓
+Proposed Change
+     ↓
+Human Confirmation
+     ↓
+Controlled Mutation
+     ↓
+Activity History
+```
+
+The current conversational editing implementation already supports the proposal stage.
+
+Example:
+
+```text
+User:
+Change the priority to LOW
+
+ResolveAI:
+I prepared the requested change for review.
+
+Priority:
+HIGH → LOW
+
+Confirmation required: true
+```
+
+The database is not modified during the proposal stage.
+
+---
+
+## Activity History
+
+ResolveAI records issue changes through the `activities` table.
+
+Activity records currently contain:
+
+- Issue ID
+- Actor type
+- Actor name
+- Action
+- Details
+- Changes
+- Timestamp
+
+Example change:
+
+```json
+{
+  "priority": {
+    "old": "LOW",
+    "new": "HIGH"
+  }
+}
+```
+
+This provides a foundation for traceability and audit-oriented workflows.
+
+---
+
+## Database Architecture
+
+ResolveAI uses PostgreSQL for structured application data.
+
+Current V2 tables include:
+
+```text
+issues
+files
+processing_jobs
+issue_extractions
+ai_analyses
+investigations
+actions
+activities
+similar_issues
+```
+
+Legacy V1 tables remain in the development database while the V2 migration is being built:
+
+```text
+deviations
+audit_logs
+```
+
+The V1 tables are retained temporarily to avoid disrupting the original implementation while V2 is developed.
+
+---
+
+## File Storage
+
+Binary files are separated from structured database records.
+
+The current architecture uses:
+
+```text
+StorageService
+     ↓
+Local Filesystem
+```
+
+The database stores file metadata such as:
+
+- Filename
+- MIME type
+- Storage key
+- File size
+- Issue ID
+- Upload timestamp
+
+The storage layer is intentionally abstracted so that object storage can be introduced later without redesigning the Issue model.
+
+---
+
+## Backend Architecture
+
+The backend follows a service-oriented FastAPI structure.
+
+```text
+backend/
+│
+├── app/
+│   ├── ai/
+│   │   ├── analysis_chain.py
+│   │   ├── analysis_prompt.py
+│   │   ├── extraction_chain.py
+│   │   ├── extraction_prompt.py
+│   │   ├── issue_extraction_chain.py
+│   │   ├── issue_extraction_prompt.py
+│   │   └── groq_client.py
+│   │
+│   ├── api/
+│   │   └── routes.py
+│   │
+│   ├── db/
+│   │   └── database.py
+│   │
+│   ├── models/
+│   │   ├── issue.py
+│   │   ├── file.py
+│   │   ├── processing_job.py
+│   │   ├── issue_extraction.py
+│   │   ├── ai_analysis.py
+│   │   ├── investigation.py
+│   │   ├── action.py
+│   │   ├── activity.py
+│   │   └── similar_issue.py
+│   │
+│   ├── schemas/
+│   │   ├── issue.py
+│   │   ├── file.py
+│   │   ├── issue_extraction.py
+│   │   └── conversation.py
+│   │
+│   ├── services/
+│   │   ├── conversation_service.py
+│   │   ├── document_processor.py
+│   │   ├── extraction_service.py
+│   │   ├── issue_processing_service.py
+│   │   ├── pdf_parser.py
+│   │   └── storage.py
+│   │
+│   └── main.py
+│
+├── create_tables.py
+└── requirements.txt
+```
+
+---
+
+## Frontend
+
+The frontend is built with:
+
+- React
+- TypeScript
+- Redux Toolkit
+- React Redux
+- Vite
+
+The existing frontend currently contains the original V1 deviation-oriented components while the V2 backend architecture is being built.
+
+The frontend will progressively migrate toward the ResolveAI Issue lifecycle workflow.
+
+---
+
+## API
+
+### Health Check
+
+```http
+GET /health
+```
+
+Returns the backend service health status.
+
+### Create Issue
+
+```http
+POST /api/issues
+```
+
+Creates a new Issue.
+
+### Get Issue
+
+```http
+GET /api/issues/{issue_id}
+```
+
+Retrieves an Issue by ID.
+
+### Update Issue
+
+```http
+PATCH /api/issues/{issue_id}
+```
+
+Updates Issue fields.
+
+Changes are recorded in Activity History.
+
+### Upload Issue File
+
+```http
+POST /api/issues/{issue_id}/files
+```
+
+Uploads a PDF or TXT document associated with an Issue.
+
+The upload creates a processing job for document processing.
+
+### Issue Activity History
+
+```http
+GET /api/issues/{issue_id}/activities
+```
+
+Retrieves the Issue's activity history.
+
+### Conversational Editing
+
+```http
+POST /api/issues/{issue_id}/conversation
+```
+
+Accepts a natural-language change request and returns a proposed change.
+
+Example:
+
+```json
+{
+  "message": "Change the priority to LOW"
+}
+```
+
+The response contains the proposed field change and whether confirmation is required.
 
 ---
 
@@ -72,657 +479,285 @@ The workflow keeps a human reviewer in control of the final submitted informatio
 
 ---
 
-## System Workflow
+## Development Architecture
+
+ResolveAI is intentionally being developed incrementally.
+
+The current architectural priorities are:
+
+1. Establish a reliable Issue data model.
+2. Separate file storage from business data.
+3. Represent asynchronous processing through ProcessingJob records.
+4. Keep AI processing behind service boundaries.
+5. Validate AI output with Pydantic.
+6. Keep humans in control of AI-proposed changes.
+7. Record important changes through Activity History.
+8. Add advanced capabilities only after the core lifecycle is stable.
+
+---
+
+## Similar Issues
+
+The planned similarity architecture starts with PostgreSQL full-text search.
+
+Later iterations may introduce embeddings for semantic similarity.
+
+Target workflow:
 
 ```text
-Deviation PDF / TXT / User Text
-              |
-              v
-       FastAPI Backend
-              |
-              v
-      Document Text Extraction
-              |
-              v
-       LangGraph Workflow
-              |
-              v
-       Groq LLM Extraction
-              |
-              v
-       Structured Deviation
-              |
-              v
-        React + Redux Form
-              |
-              v
-       Human Review / Edit
-              |
-              v
-       AI Impact & Severity
-              |
-              v
-        Save Deviation
-              |
-              v
-         PostgreSQL
-              |
-              v
-          Audit Log
+Issue
+  ↓
+Search Existing Issues
+  ↓
+Candidate Similar Issues
+  ↓
+Similarity Score
+  ↓
+Human Review
+```
+
+Semantic embeddings are intentionally deferred until the basic search workflow is stable.
+
+---
+
+## Investigation
+
+The planned investigation workflow will support:
+
+- Investigation status
+- AI-generated investigation questions
+- Probable causes
+- Findings
+- Root cause
+
+Target flow:
+
+```text
+Triaged Issue
+     ↓
+Investigation
+     ↓
+AI Questions
+     ↓
+Evidence / Findings
+     ↓
+Probable Causes
+     ↓
+Root Cause
 ```
 
 ---
 
-## Deviation Fields
+## Actions
 
-The system extracts and manages the following deviation fields:
+The planned Actions module will support:
 
-| Field | Description |
-|---|---|
-| Site / Plant | Manufacturing site where the deviation occurred |
-| Date of Occurrence | Date on which the deviation occurred |
-| Title / Short Description | Concise description of the deviation |
-| Detailed Description | Detailed description of the observed deviation |
-| Related Product | Product affected by the deviation |
-| Related Material | Material related to the deviation |
-| Batch / Lot Number | Batch or lot associated with the deviation |
-| Process Parameter Affected | Process parameter involved in the deviation |
+- Corrective actions
+- Preventive actions
+- Action descriptions
+- Owners
+- Due dates
+- Completion status
+- Completion timestamps
 
-These fields can be populated automatically by the AI and then reviewed or edited by the user.
+Target flow:
 
----
-
-## AI Extraction
-
-The extraction workflow uses LangGraph to orchestrate the AI processing.
-
-The extraction process:
-
-1. Receives deviation text.
-2. Sends the text to the Groq LLM.
-3. Extracts structured deviation information.
-4. Validates the returned information using Pydantic.
-5. Returns the validated deviation data to the frontend.
-
-The AI is instructed to:
-
-- Extract only information explicitly present in the document.
-- Avoid inventing missing information.
-- Use `null` when information is unavailable.
-- Preserve the meaning of the original text.
-- Generate a concise title when an explicit title is not provided.
-- Keep the batch number separate from the generated title.
+```text
+Root Cause
+     ↓
+Actions
+     ↓
+Owner
+     ↓
+Due Date
+     ↓
+Completion
+```
 
 ---
 
-## AI Assessment
+## Testing
 
-After extraction, the deviation is analyzed for:
+The project currently contains development-level tests and manual verification of the core backend workflows.
 
-1. Impact
-2. Severity
+Verified areas include:
 
-Both assessments use the following levels:
+- Database connectivity
+- FastAPI application startup
+- Issue creation
+- Issue retrieval
+- Issue updates
+- File upload
+- File storage
+- PDF extraction
+- AI extraction
+- Extraction persistence
+- Processing jobs
+- Activity History
+- Conversational change proposals
 
-- Critical
-- High
-- Medium
-- Low
-
-### Impact
-
-Impact represents the potential effect of the deviation on areas such as:
-
-- Product quality
-- Patient safety
-- Regulatory compliance
-
-The AI considers the available evidence and does not assume an impact that is not supported by the provided information.
-
-### Severity
-
-Severity represents the significance of the deviation itself.
-
-The assessment considers information such as:
-
-- Controlled process or parameter deviations
-- Magnitude of the deviation
-- Available consequences
-- Mitigating information
-- Whether the deviation was detected and corrected
-- Whether product damage or adverse impact was reported
-
-The AI is instructed not to assign a critical level without evidence supporting a critical event.
+A broader automated test suite will be added progressively as the architecture stabilizes.
 
 ---
 
-## Human-in-the-Loop
+## Local Development
 
-The system follows a human-in-the-loop workflow.
+### Backend
 
-AI output is not treated as the final submission automatically.
+From the project root:
 
-The user can:
+```powershell
+cd E:\AIVOA-V2\backend
+```
 
-- Review extracted fields
-- Edit extracted information
-- Correct incorrect AI output
-- Review impact assessment
-- Review severity assessment
-- Submit the final deviation
+Activate the virtual environment:
 
-This allows the AI to assist the user while keeping the final decision and submitted information under human control.
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
 
----
+Start FastAPI:
 
-## Frontend
+```powershell
+uvicorn app.main:app --reload
+```
 
-The frontend is built using React and TypeScript.
+Backend:
 
-Redux Toolkit manages the deviation intake state.
+```text
+http://127.0.0.1:8000
+```
 
-The application maintains state for:
+Swagger documentation:
 
-### Document
-
-- Uploaded file
-- Extracted document text
-- Upload status
-- Document preview
-
-### Extraction
-
-- Extraction status
-- Progress
-- Extracted deviation data
-- Confidence
-- Errors
-
-### Analysis
-
-- Analysis status
-- Impact level
-- Impact reasoning
-- Severity level
-- Severity reasoning
-
-### Form
-
-- Current form values
-- Dirty state
-- User edits
+```text
+http://127.0.0.1:8000/docs
+```
 
 ---
 
-## AI Copilot
+### Frontend
 
-The AI Copilot provides two ways to start a deviation intake:
+Open another terminal:
 
-### Text Input
+```powershell
+cd E:\AIVOA-V2\frontend
+```
 
-The user can describe a deviation directly in the Copilot.
+Install dependencies:
+
+```powershell
+npm install
+```
+
+Start the development server:
+
+```powershell
+npm run dev
+```
+
+The frontend normally runs at:
+
+```text
+http://localhost:5173
+```
+
+---
+
+## Environment Variables
+
+Secrets are kept outside the repository.
 
 Example:
 
-```text
-A deviation occurred at Plant 1 involving a storage temperature
-above the approved range for approximately 40 minutes.
+```env
+GROQ_API_KEY=your_key_here
 ```
 
-The AI extracts the available structured information and populates the form.
-
-### Document Upload
-
-The user can upload:
-
-- PDF
-- TXT
-
-The backend extracts readable text from the document before sending it to the AI extraction workflow.
-
----
-
-## Backend
-
-The backend is implemented using FastAPI.
-
-The backend is responsible for:
-
-- Receiving uploaded documents
-- Extracting PDF text
-- Processing deviation text
-- Running LangGraph workflows
-- Calling Groq
-- Validating AI responses
-- Performing impact and severity analysis
-- Saving deviations
-- Creating audit logs
-- Retrieving saved deviations
-
----
-
-## Database
-
-The application uses PostgreSQL for persistence.
-
-### `deviations`
-
-The `deviations` table stores the final deviation information.
-
-Important fields include:
-
-- `id`
-- `created_at`
-- `updated_at`
-- `site`
-- `date_of_occurrence`
-- `title`
-- `description`
-- `related_product`
-- `related_material`
-- `batch_number`
-- `process_parameter`
-- `extracted_fields`
-- `ai_recommendations`
-- `user_edits`
-- `status`
-
-### `audit_logs`
-
-The `audit_logs` table stores audit information associated with deviation actions.
-
-Important fields include:
-
-- `id`
-- `deviation_id`
-- `action`
-- `details`
-- `changes`
-- `created_at`
-
-When a deviation is saved, the system creates an audit entry describing the action.
-
----
-
-## API Endpoints
-
-### Health Check
-
-```http
-GET /health
-```
-
-Used to verify that the backend is running.
-
-### Upload Document
-
-```http
-POST /api/upload
-```
-
-Accepts PDF or TXT documents and extracts readable text.
-
-### Extract Deviation
-
-```http
-POST /api/extract
-```
-
-Accepts deviation text and returns structured deviation information.
-
-### Analyze Deviation
-
-```http
-POST /api/analyze
-```
-
-Analyzes a deviation and returns impact and severity assessments.
-
-### Save Deviation
-
-```http
-POST /api/save
-```
-
-Saves the reviewed deviation to PostgreSQL and creates an audit log.
-
-### Get Deviation
-
-```http
-GET /api/deviation/{deviation_id}
-```
-
-Retrieves a saved deviation by its database ID.
+Do not commit `.env` files or API keys.
 
 ---
 
 ## Project Structure
 
 ```text
-AIVOA/
+E:\AIVOA-V2
 │
 ├── backend/
-│   │
 │   ├── app/
-│   │   ├── ai/
-│   │   │   ├── analysis_chain.py
-│   │   │   ├── analysis_prompt.py
-│   │   │   ├── extraction_chain.py
-│   │   │   ├── extraction_prompt.py
-│   │   │   └── groq_client.py
-│   │   │
-│   │   ├── api/
-│   │   │   └── routes.py
-│   │   │
-│   │   ├── db/
-│   │   │   └── database.py
-│   │   │
-│   │   ├── models/
-│   │   │   ├── deviation.py
-│   │   │   └── audit_log.py
-│   │   │
-│   │   ├── schemas/
-│   │   │   └── deviation.py
-│   │   │
-│   │   ├── services/
-│   │   │   └── pdf_parser.py
-│   │   │
-│   │   └── main.py
-│   │
-│   ├── requirements.txt
-│   └── .env
+│   ├── create_tables.py
+│   └── requirements.txt
 │
 ├── frontend/
-│   │
 │   ├── src/
-│   │   ├── components/
-│   │   │   ├── copilot/
-│   │   │   │   └── AICopilot.tsx
-│   │   │   │
-│   │   │   └── deviation/
-│   │   │       └── DeviationForm.tsx
-│   │   │
-│   │   ├── services/
-│   │   │   └── api.ts
-│   │   │
-│   │   ├── store/
-│   │   │   ├── deviationSlice.ts
-│   │   │   └── store.ts
-│   │   │
-│   │   ├── types/
-│   │   │   └── deviation.ts
-│   │   │
-│   │   ├── App.tsx
-│   │   └── index.css
-│   │
+│   ├── public/
 │   └── package.json
 │
-└── README.md
+├── sample.pdf
+├── sample_deviation.txt
+├── README.md
+└── .gitignore
 ```
 
 ---
 
-## Running the Application
-
-### 1. Start PostgreSQL
-
-Make sure the PostgreSQL server is running and the `aivioa_db` database exists.
-
-### 2. Start the Backend
-
-Open PowerShell:
-
-```powershell
-cd E:\AIVOA\backend
-.\.venv\Scripts\Activate.ps1
-uvicorn app.main:app --reload
-```
-
-The backend will be available at:
+## Development Roadmap
 
 ```text
-http://127.0.0.1:8000
-```
-
-FastAPI documentation:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-### 3. Start the Frontend
-
-Open another PowerShell window:
-
-```powershell
-cd E:\AIVOA\frontend
-npm run dev
-```
-
-The frontend will be available at:
-
-```text
-http://localhost:5173
+V2 Foundation
+      ↓
+Issue CRUD
+      ↓
+File Storage
+      ↓
+Processing Jobs
+      ↓
+AI Extraction
+      ↓
+Activity History
+      ↓
+Conversational Editing
+      ↓
+Confirmation + Mutation
+      ↓
+Status Workflow
+      ↓
+Investigation
+      ↓
+Actions
+      ↓
+Similar Issues
+      ↓
+Dashboard
+      ↓
+Frontend V2
+      ↓
+Testing
+      ↓
+Deployment
 ```
 
 ---
 
-## Example Deviation
+## Current Milestone
 
-Example input used during testing:
+ResolveAI V2 currently has a working backend foundation consisting of:
 
-```text
-Deviation Report
+- Issue persistence
+- File storage
+- Processing jobs
+- Document processing
+- AI issue extraction
+- Extraction persistence
+- Activity History
+- Conversational change proposals
 
-Site: Plant 1
-Date of Occurrence: 27 September 2026
-
-During routine monitoring at Plant 1, the storage temperature for Product A,
-Batch B2409-15, increased above the approved range for approximately 40 minutes.
-
-The excursion was detected by the monitoring system and the temperature was
-restored to the approved range.
-
-No visible product damage was observed.
-
-Affected Process Parameter: Storage Temperature
-Related Product: Product A
-Batch Number: B2409-15
-```
-
-Expected extracted information includes:
-
-| Field | Extracted Value |
-|---|---|
-| Site | Plant 1 |
-| Date | 2026-09-27 |
-| Title | Storage Temperature Excursion for Product A |
-| Product | Product A |
-| Batch | B2409-15 |
-| Process Parameter | Storage Temperature |
-
-The AI assessment can then provide impact and severity levels based only on the information available in the deviation.
+The immediate next milestone is to implement the **confirmation and controlled mutation layer** for conversational editing.
 
 ---
 
-## End-to-End Demo
+## Design Principle
 
-The recommended demonstration flow is:
+> AI assists the issue lifecycle; humans remain in control of important decisions and final changes.
 
-### Step 1 — Open the Application
-
-Open:
-
-```text
-http://localhost:5173
-```
-
-### Step 2 — Upload the Deviation
-
-Use the AI Copilot to upload the sample deviation PDF.
-
-### Step 3 — Document Processing
-
-The backend:
-
-1. Receives the document.
-2. Extracts its text.
-3. Sends the text to the extraction workflow.
-4. Uses Groq to generate structured information.
-5. Validates the response.
-
-### Step 4 — Form Population
-
-The extracted information automatically appears in the deviation form.
-
-### Step 5 — AI Assessment
-
-The AI Copilot displays:
-
-- Impact
-- Severity
-- Reasoning for both assessments
-
-### Step 6 — Human Review
-
-Edit a field if required.
-
-For example, the user can modify the title or description before submission.
-
-### Step 7 — Save
-
-Click:
-
-```text
-Save Deviation
-```
-
-The backend stores the final information in PostgreSQL.
-
-### Step 8 — Audit
-
-The backend creates an audit log entry for the saved deviation.
-
----
-
-## Testing and Verification
-
-The following workflow has been tested:
-
-- Backend health endpoint
-- FastAPI Swagger interface
-- TXT document upload
-- PDF document upload
-- PDF text extraction
-- AI structured extraction
-- Date normalization
-- AI impact assessment
-- AI severity assessment
-- Redux form population
-- Manual form editing
-- Database persistence
-- Audit log creation
-- End-to-end save workflow
-
-The application has successfully persisted test deviations in PostgreSQL and generated corresponding audit records.
-
----
-
-## Current Status
-
-The core AIVOA Deviation Intake workflow is implemented.
-
-- [x] Project setup
-- [x] React frontend
-- [x] TypeScript
-- [x] Redux Toolkit
-- [x] FastAPI backend
-- [x] PostgreSQL database
-- [x] SQLAlchemy models
-- [x] Groq integration
-- [x] LangGraph extraction workflow
-- [x] LangGraph analysis workflow
-- [x] PDF parsing
-- [x] TXT processing
-- [x] Structured deviation extraction
-- [x] Automatic form population
-- [x] AI impact assessment
-- [x] AI severity assessment
-- [x] Human review and editing
-- [x] Save workflow
-- [x] PostgreSQL persistence
-- [x] Audit logging
-- [x] End-to-end testing
-- [x] UI refinement
-- [x] Demo workflow
-
----
-
-## Limitations
-
-The current implementation is an MVP focused on the deviation intake workflow.
-
-### PDF Processing
-
-Only machine-readable PDFs are currently supported.
-
-Scanned or image-only PDFs require OCR, which is not currently implemented.
-
-### Authentication
-
-Authentication and role-based access control are not currently implemented.
-
-### AI
-
-AI-generated extraction and assessments should be reviewed by a human before submission.
-
-### Production Deployment
-
-The current application is designed as a local development and demonstration system and has not been production deployed.
-
-### Automated Testing
-
-The core workflow has been manually verified, but a comprehensive automated test suite has not yet been implemented.
-
----
-
-## Future Improvements
-
-Potential improvements include:
-
-- OCR support for scanned PDFs
-- Authentication
-- Role-based access control
-- Deviation listing and search
-- Deviation history
-- More detailed audit trails
-- Advanced quality risk assessment
-- Additional document formats
-- Automated test coverage
-- Production deployment
-- Improved error handling
-- Performance optimization
-- More comprehensive validation
-
----
-
-## Conclusion
-
-AIVOA demonstrates an AI-assisted deviation intake workflow for pharmaceutical manufacturing.
-
-The system combines:
-
-- React
-- Redux
-- FastAPI
-- PostgreSQL
-- SQLAlchemy
-- LangGraph
-- Groq
-- PDF text extraction
-
-to create a workflow where unstructured deviation information can be converted into structured data, assessed by AI, reviewed by a human, and persisted with an audit record.
-
-The primary design principle is:
-
-**AI assists the deviation intake process, while the human remains in control of the final submitted information.**
+ResolveAI is being developed as a portfolio project focused on practical AI engineering, backend architecture, human-in-the-loop workflows, traceability, and progressive system design.
