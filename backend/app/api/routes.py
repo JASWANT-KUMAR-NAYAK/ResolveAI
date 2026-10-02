@@ -16,6 +16,14 @@ from app.models.file import File as FileModel
 from app.models.processing_job import ProcessingJob
 from app.models.activity import Activity
 
+from app.models.investigation import Investigation
+
+from app.schemas.investigation import (
+    InvestigationCreate,
+    InvestigationUpdate,
+    InvestigationResponse,
+)
+
 from app.schemas.file import FileResponse
 from app.schemas.issue import IssueCreate, IssueResponse, IssueUpdate
 from app.services.storage import StorageService
@@ -401,3 +409,107 @@ def propose_issue_change(
         issue=issue,
         message=request.message,
     )
+@router.post(
+    "/issues/{issue_id}/investigation",
+    response_model=InvestigationResponse,
+)
+def create_investigation(
+    issue_id: int,
+    request: InvestigationCreate,
+    db: Session = Depends(get_db),
+) -> InvestigationResponse:
+    issue = db.get(Issue, issue_id)
+
+    if not issue:
+        raise HTTPException(
+            status_code=404,
+            detail="Issue not found",
+        )
+
+    investigation = Investigation(
+        issue_id=issue_id,
+        status="OPEN",
+        ai_questions=request.ai_questions,
+        probable_causes=request.probable_causes,
+        findings=request.findings,
+        root_cause=request.root_cause,
+    )
+
+    db.add(investigation)
+    db.commit()
+    db.refresh(investigation)
+
+    return investigation
+
+@router.get(
+    "/issues/{issue_id}/investigation",
+    response_model=InvestigationResponse,
+)
+def get_investigation(
+    issue_id: int,
+    db: Session = Depends(get_db),
+) -> InvestigationResponse:
+    issue = db.get(Issue, issue_id)
+
+    if not issue:
+        raise HTTPException(
+            status_code=404,
+            detail="Issue not found",
+        )
+
+    investigation = (
+        db.query(Investigation)
+        .filter(Investigation.issue_id == issue_id)
+        .order_by(Investigation.created_at.desc())
+        .first()
+    )
+
+    if not investigation:
+        raise HTTPException(
+            status_code=404,
+            detail="Investigation not found",
+        )
+
+    return investigation
+
+
+
+@router.patch(
+    "/issues/{issue_id}/investigation",
+    response_model=InvestigationResponse,
+)
+def update_investigation(
+    issue_id: int,
+    request: InvestigationUpdate,
+    db: Session = Depends(get_db),
+) -> InvestigationResponse:
+    issue = db.get(Issue, issue_id)
+
+    if not issue:
+        raise HTTPException(
+            status_code=404,
+            detail="Issue not found",
+        )
+
+    investigation = (
+        db.query(Investigation)
+        .filter(Investigation.issue_id == issue_id)
+        .order_by(Investigation.created_at.desc())
+        .first()
+    )
+
+    if not investigation:
+        raise HTTPException(
+            status_code=404,
+            detail="Investigation not found",
+        )
+
+    update_data = request.model_dump(exclude_unset=True)
+
+    for field, value in update_data.items():
+        setattr(investigation, field, value)
+
+    db.commit()
+    db.refresh(investigation)
+
+    return investigation
