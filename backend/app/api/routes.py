@@ -3,6 +3,7 @@ from app.services.conversation_service import ConversationService
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
+from app.services.investigation_service import InvestigationService
 
 from app.ai.extraction_chain import extraction_graph
 from app.ai.analysis_chain import analysis_graph
@@ -510,6 +511,57 @@ def update_investigation(
         setattr(investigation, field, value)
 
     db.commit()
+    db.refresh(investigation)
+
+    return investigation
+
+@router.post(
+    "/issues/{issue_id}/investigation/questions",
+    response_model=InvestigationResponse,
+)
+def generate_investigation_questions(
+    issue_id: int,
+    db: Session = Depends(get_db),
+) -> InvestigationResponse:
+    issue = db.get(Issue, issue_id)
+
+    if not issue:
+        raise HTTPException(
+            status_code=404,
+            detail="Issue not found",
+        )
+
+    investigation = (
+        db.query(Investigation)
+        .filter(Investigation.issue_id == issue_id)
+        .order_by(Investigation.created_at.desc())
+        .first()
+    )
+
+    if not investigation:
+        raise HTTPException(
+            status_code=404,
+            detail="Investigation not found",
+        )
+
+    issue_context = f"""
+Title: {issue.title}
+Description: {issue.description}
+Location: {issue.location}
+Affected Product: {issue.affected_product}
+Affected Material: {issue.affected_material}
+Reference ID: {issue.reference_id}
+Affected Area: {issue.affected_area}
+Category: {issue.category}
+Priority: {issue.priority}
+Business Impact: {issue.business_impact}
+"""
+
+    InvestigationService(db).generate_questions(
+        investigation=investigation,
+        issue_context=issue_context,
+    )
+
     db.refresh(investigation)
 
     return investigation
